@@ -7,17 +7,16 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/docker/docker/pkg/urlutil"
+	"github.com/docker/docker/builder/remotecontext/urlutil"
 	log "github.com/hashicorp/go-hclog"
 	buildkit "github.com/moby/buildkit/session"
-	//"github.com/moby/buildkit/session/auth/authprovider"
 	"github.com/moby/buildkit/session/filesync"
 	"github.com/moby/buildkit/session/secrets/secretsprovider"
 	"github.com/moby/buildkit/session/sshforward/sshprovider"
 	"github.com/pkg/errors"
 	"github.com/tonistiigi/fsutil"
 	fstypes "github.com/tonistiigi/fsutil/types"
-	core "github.com/wabenet/dodo-core/api/core/v1alpha5"
+	api "github.com/wabenet/dodo-core/api/build/v1alpha2"
 )
 
 const clientSession = "client-session"
@@ -42,7 +41,7 @@ func (data *contextData) cleanup() {
 	}
 }
 
-func prepareContext(config *core.BuildInfo, session session) (*contextData, error) {
+func prepareContext(config *api.BuildConfig, session session) (*contextData, error) {
 	log.L().Debug("preparing context")
 
 	data := contextData{
@@ -167,7 +166,7 @@ func writeDockerfile(path string, content string) error {
 	return nil
 }
 
-func secretsProvider(config *core.BuildInfo) (buildkit.Attachable, error) {
+func secretsProvider(config *api.BuildConfig) (buildkit.Attachable, error) {
 	sources := make([]secretsprovider.Source, 0, len(config.Secrets))
 
 	for _, secret := range config.Secrets {
@@ -186,7 +185,7 @@ func secretsProvider(config *core.BuildInfo) (buildkit.Attachable, error) {
 	return secretsprovider.NewSecretProvider(store), nil
 }
 
-func sshAgentProvider(config *core.BuildInfo) (buildkit.Attachable, error) {
+func sshAgentProvider(config *api.BuildConfig) (buildkit.Attachable, error) {
 	configs := make([]sshprovider.AgentConfig, 0, len(config.SshAgents))
 
 	for _, agent := range config.SshAgents {

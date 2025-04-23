@@ -4,18 +4,18 @@ import (
 	"bytes"
 	"encoding/json"
 	"io"
-	"io/ioutil"
 	"net"
 	"testing"
 
 	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/pkg/jsonmessage"
 	"github.com/stretchr/testify/assert"
-	core "github.com/wabenet/dodo-core/api/core/v1alpha5"
+	api "github.com/wabenet/dodo-core/api/build/v1alpha2"
 	"golang.org/x/net/context"
 )
 
-func fakeImage(t *testing.T, config *core.BuildInfo) *Image {
+func fakeImage(t *testing.T, config *api.BuildConfig) *Image {
 	return &Image{
 		client:  &fakeImageClient{t: t, willBuildAs: "NewImageID"},
 		config:  config,
@@ -35,9 +35,9 @@ func (client *fakeImageClient) DialHijack(
 }
 
 func (client *fakeImageClient) ImageList(
-	_ context.Context, _ types.ImageListOptions,
-) ([]types.ImageSummary, error) {
-	return []types.ImageSummary{}, nil
+	_ context.Context, _ image.ListOptions,
+) ([]image.Summary, error) {
+	return []image.Summary{}, nil
 }
 
 func (client *fakeImageClient) BuildCancel(_ context.Context, _ string) error {
@@ -60,5 +60,5 @@ func (client *fakeImageClient) ImageBuild(
 	response, err := json.Marshal(message)
 	assert.Nil(client.t, err)
 
-	return types.ImageBuildResponse{Body: ioutil.NopCloser(bytes.NewReader(response))}, nil
+	return types.ImageBuildResponse{Body: io.NopCloser(bytes.NewReader(response))}, nil
 }

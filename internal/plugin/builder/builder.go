@@ -4,12 +4,15 @@ import (
 	"context"
 	"fmt"
 
+	cli "github.com/docker/cli/cli/command"
+	cliflags "github.com/docker/cli/cli/flags"
+	"github.com/docker/docker/api/types/registry"
 	docker "github.com/docker/docker/client"
 	"github.com/wabenet/dodo-buildkit/internal/image"
-	core "github.com/wabenet/dodo-core/api/core/v1alpha5"
+	api "github.com/wabenet/dodo-core/api/build/v1alpha2"
+	pluginapi "github.com/wabenet/dodo-core/api/plugin/v1alpha1"
 	"github.com/wabenet/dodo-core/pkg/plugin"
 	"github.com/wabenet/dodo-core/pkg/plugin/builder"
-	"github.com/wabenet/dodo-docker/pkg/client"
 )
 
 const name = "buildkit"
@@ -17,14 +20,14 @@ const name = "buildkit"
 var _ builder.ImageBuilder = &Builder{}
 
 type Builder struct {
-	client *docker.Client
+	client docker.APIClient
 }
 
 func New() *Builder {
 	return &Builder{}
 }
 
-func NewFromClient(client *docker.Client) *Builder {
+func NewFromClient(client docker.APIClient) *Builder {
 	return &Builder{client: client}
 }
 
@@ -32,9 +35,9 @@ func (p *Builder) Type() plugin.Type {
 	return builder.Type
 }
 
-func (p *Builder) PluginInfo() *core.PluginInfo {
-	return &core.PluginInfo{
-		Name: &core.PluginName{
+func (p *Builder) PluginInfo() *pluginapi.PluginInfo {
+	return &pluginapi.PluginInfo{
+		Name: &pluginapi.PluginName{
 			Name: name,
 			Type: builder.Type.String(),
 		},
@@ -64,26 +67,42 @@ func (p *Builder) Init() (plugin.Config, error) {
 
 func (*Builder) Cleanup() {}
 
-func (p *Builder) ensureClient() (*docker.Client, error) {
+func (p *Builder) ensureClient() (docker.APIClient, error) {
 	if p.client == nil {
-		dockerClient, err := client.GetDockerClient()
+		dockerCLI, err := cli.NewDockerCli(cli.WithBaseContext(context.Background()))
 		if err != nil {
 			return nil, fmt.Errorf("could not get docker config: %w", err)
 		}
 
-		p.client = dockerClient
+		if err := dockerCLI.Initialize(&cliflags.ClientOptions{}); err != nil {
+			return nil, fmt.Errorf("could not get docker config: %w", err)
+		}
+
+		p.client = dockerCLI.Client()
 	}
 
 	return p.client, nil
 }
 
-func (p *Builder) CreateImage(config *core.BuildInfo, stream *plugin.StreamConfig) (string, error) {
+func (p *Builder) CreateImage(config *api.BuildConfig, stream *plugin.StreamConfig) (string, error) {
 	c, err := p.ensureClient()
 	if err != nil {
 		return "", err
 	}
 
-	img, err := image.NewImage(c, client.LoadAuthConfig(), config, stream)
+	// TODO: Don't do this twice
+	dockerCLI, err := cli.NewDockerCli(cli.WithBaseContext(context.Background()))
+	if err != nil {
+		return "", fmt.Errorf("could not get docker config: %w", err)
+	}
+
+	creds, _ := dockerCLI.ConfigFile().GetAllCredentials()
+	authConfigs := make(map[string]registry.AuthConfig, len(creds))
+	for k, auth := range creds {
+		authConfigs[k] = registry.AuthConfig(auth)
+	}
+
+	img, err := image.NewImage(c, authConfigs, config, stream)
 	if err != nil {
 		return "", fmt.Errorf("could not initialize builder client: %w", err)
 	}

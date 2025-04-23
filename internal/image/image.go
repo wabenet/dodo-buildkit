@@ -5,7 +5,9 @@ import (
 	"net"
 
 	"github.com/docker/docker/api/types"
-	core "github.com/wabenet/dodo-core/api/core/v1alpha5"
+	"github.com/docker/docker/api/types/image"
+	"github.com/docker/docker/api/types/registry"
+	api "github.com/wabenet/dodo-core/api/build/v1alpha2"
 	"github.com/wabenet/dodo-core/pkg/plugin"
 	"golang.org/x/net/context"
 )
@@ -22,23 +24,23 @@ func (e ImageError) Error() string {
 }
 
 type Image struct {
-	config      *core.BuildInfo
+	config      *api.BuildConfig
 	client      Client
-	authConfigs map[string]types.AuthConfig
+	authConfigs map[string]registry.AuthConfig
 	session     session
 	stream      *plugin.StreamConfig
 }
 
 type Client interface {
 	DialHijack(context.Context, string, string, map[string][]string) (net.Conn, error)
-	ImageList(context.Context, types.ImageListOptions) ([]types.ImageSummary, error)
+	ImageList(context.Context, image.ListOptions) ([]image.Summary, error)
 	ImageBuild(context.Context, io.Reader, types.ImageBuildOptions) (types.ImageBuildResponse, error)
 }
 
 func NewImage(
 	client Client,
-	authConfigs map[string]types.AuthConfig,
-	config *core.BuildInfo,
+	authConfigs map[string]registry.AuthConfig,
+	config *api.BuildConfig,
 	stream *plugin.StreamConfig,
 ) (*Image, error) {
 	if client == nil {

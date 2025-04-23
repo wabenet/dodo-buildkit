@@ -13,6 +13,7 @@ import (
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
+	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/pkg/jsonmessage"
 	"github.com/docker/docker/pkg/stringid"
 	controlapi "github.com/moby/buildkit/api/services/control"
@@ -22,19 +23,19 @@ import (
 	"golang.org/x/time/rate"
 )
 
-func (image *Image) Get() (string, error) {
-	if image.config.ForceRebuild || len(image.config.ImageName) == 0 {
-		return image.Build()
+func (img *Image) Get() (string, error) {
+	if img.config.ForceRebuild || len(img.config.ImageName) == 0 {
+		return img.Build()
 	}
 
-	imgs, err := image.client.ImageList(
+	imgs, err := img.client.ImageList(
 		context.Background(),
-		types.ImageListOptions{
-			Filters: filters.NewArgs(filters.Arg("reference", image.config.ImageName)),
+		image.ListOptions{
+			Filters: filters.NewArgs(filters.Arg("reference", img.config.ImageName)),
 		},
 	)
 	if err != nil || len(imgs) == 0 {
-		return image.Build()
+		return img.Build()
 	}
 
 	return imgs[0].ID, nil
