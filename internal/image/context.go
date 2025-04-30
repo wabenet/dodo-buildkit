@@ -29,7 +29,12 @@ type contextData struct {
 
 func (data *contextData) tempdir() (string, error) {
 	if len(data.contextDir) == 0 {
-		data.contextDir = os.TempDir()
+		dir, err := os.MkdirTemp("", "dodo-context-")
+		if err != nil {
+			return "", fmt.Errorf("could not create context directory: %w", err)
+		}
+
+		data.contextDir = dir
 	}
 
 	return data.contextDir, nil
