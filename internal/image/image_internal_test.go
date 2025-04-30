@@ -11,11 +11,11 @@ import (
 	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/pkg/jsonmessage"
 	"github.com/stretchr/testify/assert"
-	api "github.com/wabenet/dodo-core/api/build/v1alpha2"
+	"github.com/wabenet/dodo-core/pkg/plugin/builder"
 	"golang.org/x/net/context"
 )
 
-func fakeImage(t *testing.T, config *api.BuildConfig) *Image {
+func fakeImage(t *testing.T, config builder.BuildConfig) *Image {
 	return &Image{
 		client:  &fakeImageClient{t: t, willBuildAs: "NewImageID"},
 		config:  config,

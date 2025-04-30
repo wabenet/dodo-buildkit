@@ -9,8 +9,6 @@ import (
 	"github.com/docker/docker/api/types/registry"
 	docker "github.com/docker/docker/client"
 	"github.com/wabenet/dodo-buildkit/internal/image"
-	api "github.com/wabenet/dodo-core/api/build/v1alpha2"
-	pluginapi "github.com/wabenet/dodo-core/api/plugin/v1alpha1"
 	"github.com/wabenet/dodo-core/pkg/plugin"
 	"github.com/wabenet/dodo-core/pkg/plugin/builder"
 )
@@ -35,13 +33,8 @@ func (p *Builder) Type() plugin.Type {
 	return builder.Type
 }
 
-func (p *Builder) PluginInfo() *pluginapi.PluginInfo {
-	return &pluginapi.PluginInfo{
-		Name: &pluginapi.PluginName{
-			Name: name,
-			Type: builder.Type.String(),
-		},
-	}
+func (p *Builder) Metadata() plugin.Metadata {
+	return plugin.NewMetadata(builder.Type, name)
 }
 
 func (p *Builder) Init() (plugin.Config, error) {
@@ -84,7 +77,7 @@ func (p *Builder) ensureClient() (docker.APIClient, error) {
 	return p.client, nil
 }
 
-func (p *Builder) CreateImage(config *api.BuildConfig, stream *plugin.StreamConfig) (string, error) {
+func (p *Builder) CreateImage(config builder.BuildConfig, stream *plugin.StreamConfig) (string, error) {
 	c, err := p.ensureClient()
 	if err != nil {
 		return "", err

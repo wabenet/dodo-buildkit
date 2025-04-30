@@ -16,7 +16,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/tonistiigi/fsutil"
 	fstypes "github.com/tonistiigi/fsutil/types"
-	api "github.com/wabenet/dodo-core/api/build/v1alpha2"
+	"github.com/wabenet/dodo-core/pkg/plugin/builder"
 )
 
 const clientSession = "client-session"
@@ -46,7 +46,7 @@ func (data *contextData) cleanup() {
 	}
 }
 
-func prepareContext(config *api.BuildConfig, session session) (*contextData, error) {
+func prepareContext(config builder.BuildConfig, session session) (*contextData, error) {
 	log.L().Debug("preparing context")
 
 	data := contextData{
@@ -139,7 +139,7 @@ func prepareContext(config *api.BuildConfig, session session) (*contextData, err
 		session.Allow(provider)
 	}
 
-	if len(config.SshAgents) > 0 {
+	if len(config.SSHAgents) > 0 {
 		provider, err := sshAgentProvider(config)
 		if err != nil {
 			return nil, err
@@ -171,12 +171,12 @@ func writeDockerfile(path string, content string) error {
 	return nil
 }
 
-func secretsProvider(config *api.BuildConfig) (buildkit.Attachable, error) {
+func secretsProvider(config builder.BuildConfig) (buildkit.Attachable, error) {
 	sources := make([]secretsprovider.Source, 0, len(config.Secrets))
 
 	for _, secret := range config.Secrets {
 		source := secretsprovider.Source{
-			ID:       secret.Id,
+			ID:       secret.ID,
 			FilePath: secret.Path,
 		}
 		sources = append(sources, source)
@@ -190,12 +190,12 @@ func secretsProvider(config *api.BuildConfig) (buildkit.Attachable, error) {
 	return secretsprovider.NewSecretProvider(store), nil
 }
 
-func sshAgentProvider(config *api.BuildConfig) (buildkit.Attachable, error) {
-	configs := make([]sshprovider.AgentConfig, 0, len(config.SshAgents))
+func sshAgentProvider(config builder.BuildConfig) (buildkit.Attachable, error) {
+	configs := make([]sshprovider.AgentConfig, 0, len(config.SSHAgents))
 
-	for _, agent := range config.SshAgents {
+	for _, agent := range config.SSHAgents {
 		config := sshprovider.AgentConfig{
-			ID:    agent.Id,
+			ID:    agent.ID,
 			Paths: []string{agent.IdentityFile},
 		}
 		configs = append(configs, config)

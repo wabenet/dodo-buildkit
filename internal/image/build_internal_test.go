@@ -5,14 +5,14 @@ import (
 
 	controlapi "github.com/moby/buildkit/api/services/control"
 	"github.com/stretchr/testify/assert"
-	api "github.com/wabenet/dodo-core/api/build/v1alpha2"
+	"github.com/wabenet/dodo-core/pkg/plugin/builder"
 )
 
 func TestBuildImage(t *testing.T) {
 	displayCh := make(chan *controlapi.StatusResponse)
 	defer close(displayCh)
 
-	image := fakeImage(t, &api.BuildConfig{
+	image := fakeImage(t, builder.BuildConfig{
 		Context: "./test",
 	})
 	result, err := image.runBuild(&contextData{
@@ -27,7 +27,7 @@ func TestBuildInlineImage(t *testing.T) {
 	displayCh := make(chan *controlapi.StatusResponse)
 	defer close(displayCh)
 
-	image := fakeImage(t, &api.BuildConfig{
+	image := fakeImage(t, builder.BuildConfig{
 		InlineDockerfile: []string{"FROM scratch"},
 	})
 	result, err := image.runBuild(&contextData{
