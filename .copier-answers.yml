@@ -1,12 +1,10 @@
 # Changes here will be overwritten by Copier; NEVER EDIT MANUALLY
-_commit: v0.1.7
+_commit: v0.3.11
 _src_path: https://github.com/wabenet/copier-dodo-plugin
-author_email: ole.claussen@wabenet.com
-author_name: Ole Claussen
+archetype: other
+archetype_other: plugin
+components: []
 description: Adds support for buildkit as a dodo builder plugin.
-go_version: '1.20'
-is_standalone: true
 lifecycle: production
 name: buildkit
-use_protobuf: false
 

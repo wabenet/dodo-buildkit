@@ -1,11 +1,6 @@
 backdrops:
   make:
-    image:
-      steps: |
-        FROM golang:1.20
-        RUN apt-get update && apt-get install -y git bash curl tree make
-        RUN go install github.com/goreleaser/goreleaser@latest
-        RUN curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s v1.51.1
+    image: wabenet/wabe-project-build:v0.3.11
     volumes:
       - "{{ projectRoot }}:/build"
       - "{{ projectRoot }}/.cache:/go/pkg/mod"

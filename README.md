@@ -1,10 +1,10 @@
 ![release](https://img.shields.io/github/v/release/wabenet/dodo-buildkit?sort=semver)
-![build](https://img.shields.io/github/workflow/status/wabenet/dodo-buildkit/CI?logo=github)
+![build](https://img.shields.io/github/actions/workflow/status/wabenet/dodo-buildkit/ci.yaml?branch=main&logo=github)
 ![codecov](https://img.shields.io/codecov/c/github/wabenet/dodo-buildkit?logo=codecov)
 ![codeclimate](https://img.shields.io/codeclimate/maintainability/wabenet/dodo-buildkit?logo=codeclimate)
 ![license](https://img.shields.io/github/license/wabenet/dodo-buildkit)
 
-# dodo buildkit plugin
+# dodo-buildkit
 
 Adds support for buildkit as a dodo builder plugin.
 
@@ -36,7 +36,7 @@ similar to the normal [docker cli](https://docs.docker.com/engine/reference/comm
 ## license & authors
 
 ```text
-Copyright 2022 Ole Claussen
+Copyright 2025 Ole Claussen
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.

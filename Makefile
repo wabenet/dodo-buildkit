@@ -3,11 +3,15 @@ all: clean test build lint
 
 .PHONY: clean
 clean:
-	rm -rf ./dist
+	rm -rf ./dist c.out coverage.txt
 
 .PHONY: fmt
 fmt:
 	go fmt ./...
+
+.PHONY: copier-update
+copier-update:
+	copier update --trust --skip-answered
 
 .PHONY: update
 update:
@@ -20,8 +24,19 @@ lint:
 
 .PHONY: test
 test:
-	go test -cover -race ./...
+	go test -race -cover ./...
+
+.PHONY: coverage-report
+coverage-report:
+	cc-test-reporter before-build
+	go test -race -coverprofile=coverage.txt -covermode=atomic -coverpkg=./... ./...
+	cp coverage.txt c.out
+	cc-test-reporter after-build -t gocov -p $$(go list -m)
 
 .PHONY: build
 build:
 	goreleaser build --snapshot --clean
+
+.PHONY: release
+release:
+	goreleaser release --clean
