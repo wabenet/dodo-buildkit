@@ -2,10 +2,9 @@ package image
 
 import (
 	"crypto/rand"
-	"crypto/sha256"
+	//"crypto/sha256"
 	"encoding/hex"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -23,15 +22,15 @@ type session interface {
 }
 
 func prepareSession(baseDir string) (session, error) {
-	sessionID, err := readOrCreateSessionID()
-	if err != nil {
-		return nil, err
-	}
+	//sessionID, err := readOrCreateSessionID()
+	//if err != nil {
+	//	return nil, err
+	//}
 
-	s := sha256.Sum256([]byte(fmt.Sprintf("%s:%s", sessionID, baseDir)))
-	sharedKey := hex.EncodeToString(s[:])
+	//s := sha256.Sum256([]byte(fmt.Sprintf("%s:%s", sessionID, baseDir)))
+	//sharedKey := hex.EncodeToString(s[:])
 
-	session, err := buildkit.NewSession(context.Background(), filepath.Base(baseDir), sharedKey)
+	session, err := buildkit.NewSession(context.Background(), filepath.Base(baseDir))
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create session")
 	}
@@ -42,7 +41,7 @@ func prepareSession(baseDir string) (session, error) {
 func readOrCreateSessionID() (string, error) {
 	sessionFile := filepath.Join(config.GetAppDir(), "sessionID")
 	if _, err := os.Lstat(sessionFile); err == nil {
-		sessionID, err := ioutil.ReadFile(sessionFile)
+		sessionID, err := os.ReadFile(sessionFile)
 		if err != nil {
 			return "", fmt.Errorf("could not read file: %w", err)
 		}
@@ -56,7 +55,7 @@ func readOrCreateSessionID() (string, error) {
 	}
 
 	sessionID = []byte(hex.EncodeToString(sessionID))
-	if err := ioutil.WriteFile(sessionFile, sessionID, 0600); err != nil {
+	if err := os.WriteFile(sessionFile, sessionID, 0600); err != nil {
 		return "", fmt.Errorf("could not write session file %s: %w", sessionFile, err)
 	}
 

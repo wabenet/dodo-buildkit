@@ -63,17 +63,31 @@ func prepareContext(config builder.BuildConfig, session session) (*contextData, 
 			return nil, err
 		}
 
-		syncedDirs["context"] = filesync.SyncedDir{Dir: dir}
+		fs, err := fsutil.NewFS(dir)
+		if err != nil {
+			return nil, err
+		}
+
+		syncedDirs["context"] = fs
 	} else if _, err := os.Stat(config.Context); err == nil {
-		syncedDirs["context"] = filesync.SyncedDir{
-			Dir: config.Context,
+		fs, err := fsutil.NewFS(config.Context)
+		if err != nil {
+			return nil, err
+		}
+
+		fs, err = fsutil.NewFilterFS(fs, &fsutil.FilterOpt{
 			Map: func(_ string, stat *fstypes.Stat) fsutil.MapResult {
 				stat.Uid = 0
 				stat.Gid = 0
 
 				return fsutil.MapResultKeep
 			},
+		})
+		if err != nil {
+			return nil, err
 		}
+
+		syncedDirs["context"] = fs
 	} else if urlutil.IsURL(config.Context) {
 		data.remote = config.Context
 	} else {
@@ -103,16 +117,22 @@ func prepareContext(config builder.BuildConfig, session session) (*contextData, 
 		data.dockerfileName = filepath.Base(tempfile)
 		dockerfileDir := filepath.Dir(tempfile)
 
-		syncedDirs["dockerfile"] = filesync.SyncedDir{
-			Dir: dockerfileDir,
+		fs, err := fsutil.NewFS(dockerfileDir)
+		if err != nil {
+			return nil, err
 		}
+
+		syncedDirs["dockerfile"] = fs
 	} else if config.Dockerfile != "" && data.remote == clientSession {
 		data.dockerfileName = filepath.Base(config.Dockerfile)
 		dockerfileDir := filepath.Dir(config.Dockerfile)
 
-		syncedDirs["dockerfile"] = filesync.SyncedDir{
-			Dir: dockerfileDir,
+		fs, err := fsutil.NewFS(dockerfileDir)
+		if err != nil {
+			return nil, err
 		}
+
+		syncedDirs["dockerfile"] = fs
 	}
 
 	log.L().Debug(

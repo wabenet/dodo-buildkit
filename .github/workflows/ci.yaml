@@ -6,57 +6,15 @@ on: [push, pull_request]
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
-      - uses: actions/checkout@v3
-
-      - uses: actions/setup-go@v4
+      - uses: wabenet/project-template/actions/build@v0.3.7
         with:
           go-version: "1.20"
 
-      - uses: goreleaser/goreleaser-action@v2
-        with:
-          args: build --snapshot --rm-dist
-
-  codecov:
+  coverage:
     runs-on: ubuntu-latest
-
     steps:
-      - uses: actions/checkout@v3
-        with:
-          fetch-depth: 2
-
-      - uses: actions/setup-go@v4
+      - uses: wabenet/project-template/actions/coverage@v0.3.7
         with:
           go-version: "1.20"
-
-      - name: Test and coverage
-        run: go test -race -coverprofile=coverage.txt -covermode=atomic -coverpkg=./... ./...
-
-      - name: Upload to codecov
-        run: bash <(curl -s https://codecov.io/bash)
-
-  codeclimate:
-    runs-on: ubuntu-latest
-    env:
-      CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
-
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          fetch-depth: 2
-
-      - uses: actions/setup-go@v4
-        with:
-          go-version: "1.20"
-
-      - name: Set up test reporter
-        run: |
-          curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
-          chmod +x ./cc-test-reporter
-          ./cc-test-reporter before-build
-
-      - name: Upload to codeclimate
-        run: |
-          go test -race -coverprofile=c.out -covermode=atomic -coverpkg=./... ./...
-          ./cc-test-reporter after-build -t gocov -p $(go list -m)
+          cc-reporter-id: ${{ secrets.CC_TEST_REPORTER_ID }}
