@@ -4,7 +4,7 @@ go 1.24.0
 
 require (
 	github.com/docker/cli v28.1.1+incompatible
-	github.com/docker/docker v28.1.1+incompatible
+	github.com/docker/docker v28.4.0+incompatible
 	github.com/hashicorp/go-hclog v1.6.3
 	github.com/moby/buildkit v0.16.0
 	github.com/morikuni/aec v1.0.0
@@ -29,6 +29,7 @@ require (
 	github.com/containerd/containerd/api v1.8.0 // indirect
 	github.com/containerd/continuity v0.4.5 // indirect
 	github.com/containerd/errdefs v1.0.0 // indirect
+	github.com/containerd/errdefs/pkg v0.3.0 // indirect
 	github.com/containerd/log v0.1.0 // indirect
 	github.com/containerd/platforms v1.0.0-rc.1 // indirect
 	github.com/containerd/ttrpc v1.2.7 // indirect
