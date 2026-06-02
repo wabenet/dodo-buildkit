@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"github.com/wabenet/dodo-buildkit"
+	plugin "github.com/wabenet/dodo-buildkit"
 )
 
 func main() {

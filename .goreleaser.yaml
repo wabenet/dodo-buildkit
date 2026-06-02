@@ -1,4 +1,5 @@
 ---
+version: 2
 project_name: dodo-buildkit
 
 before:
@@ -7,22 +8,21 @@ before:
     - go generate ./...
 
 builds:
-  - id: plugin
+  - id: main
     main: ./cmd/dodo-buildkit
     env: ["CGO_ENABLED=0"]
     goos: [linux, darwin]
 
 archives:
-  - id: plugin
-    builds: [plugin]
-    format: binary
+  - ids: [main]
+    formats: [binary]
     name_template: "{{ .Binary }}_{{ .Os }}_{{ .Arch }}"
 
 checksum:
   name_template: 'checksums.txt'
 
 snapshot:
-  name_template: "{{ .Tag }}-next"
+  version_template: "{{ .Tag }}-next"
 
 changelog:
   sort: asc
