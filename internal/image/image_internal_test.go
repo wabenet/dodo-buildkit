@@ -2,17 +2,17 @@ package image
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"io"
 	"net"
 	"testing"
 
-	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/api/types/image"
-	"github.com/docker/docker/pkg/jsonmessage"
+	"github.com/moby/moby/api/types/build"
+	"github.com/moby/moby/api/types/jsonstream"
+	moby "github.com/moby/moby/client"
 	"github.com/stretchr/testify/assert"
 	"github.com/wabenet/dodo-core/pkg/plugin/builder"
-	"golang.org/x/net/context"
 )
 
 func fakeImage(t *testing.T, config builder.BuildConfig) *Image {
@@ -35,9 +35,9 @@ func (client *fakeImageClient) DialHijack(
 }
 
 func (client *fakeImageClient) ImageList(
-	_ context.Context, _ image.ListOptions,
-) ([]image.Summary, error) {
-	return []image.Summary{}, nil
+	_ context.Context, _ moby.ImageListOptions,
+) (moby.ImageListResult, error) {
+	return moby.ImageListResult{}, nil
 }
 
 func (client *fakeImageClient) BuildCancel(_ context.Context, _ string) error {
@@ -45,14 +45,14 @@ func (client *fakeImageClient) BuildCancel(_ context.Context, _ string) error {
 }
 
 func (client *fakeImageClient) ImageBuild(
-	_ context.Context, _ io.Reader, _ types.ImageBuildOptions,
-) (types.ImageBuildResponse, error) {
-	buildResult := types.BuildResult{ID: client.willBuildAs}
+	_ context.Context, _ io.Reader, _ moby.ImageBuildOptions,
+) (moby.ImageBuildResult, error) {
+	buildResult := build.Result{ID: client.willBuildAs}
 	auxJSON, err := json.Marshal(buildResult)
 	assert.Nil(client.t, err)
 
 	rawJSON := json.RawMessage(auxJSON)
-	message := jsonmessage.JSONMessage{
+	message := jsonstream.Message{
 		ID:     "moby.image.id",
 		Stream: "hello world",
 		Aux:    &rawJSON,
@@ -60,5 +60,5 @@ func (client *fakeImageClient) ImageBuild(
 	response, err := json.Marshal(message)
 	assert.Nil(client.t, err)
 
-	return types.ImageBuildResponse{Body: io.NopCloser(bytes.NewReader(response))}, nil
+	return moby.ImageBuildResult{Body: io.NopCloser(bytes.NewReader(response))}, nil
 }

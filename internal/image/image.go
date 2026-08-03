@@ -1,15 +1,14 @@
 package image
 
 import (
+	"context"
 	"io"
 	"net"
 
-	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/api/types/image"
-	"github.com/docker/docker/api/types/registry"
+	"github.com/moby/moby/api/types/registry"
+	moby "github.com/moby/moby/client"
 	"github.com/wabenet/dodo-core/pkg/plugin"
 	"github.com/wabenet/dodo-core/pkg/plugin/builder"
-	"golang.org/x/net/context"
 )
 
 const (
@@ -33,8 +32,8 @@ type Image struct {
 
 type Client interface {
 	DialHijack(context.Context, string, string, map[string][]string) (net.Conn, error)
-	ImageList(context.Context, image.ListOptions) ([]image.Summary, error)
-	ImageBuild(context.Context, io.Reader, types.ImageBuildOptions) (types.ImageBuildResponse, error)
+	ImageList(context.Context, moby.ImageListOptions) (moby.ImageListResult, error)
+	ImageBuild(context.Context, io.Reader, moby.ImageBuildOptions) (moby.ImageBuildResult, error)
 }
 
 func NewImage(

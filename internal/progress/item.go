@@ -3,7 +3,7 @@ package progress
 import (
 	"time"
 
-	digest "github.com/opencontainers/go-digest"
+	timestamp "google.golang.org/protobuf/types/known/timestamppb"
 )
 
 const (
@@ -24,39 +24,39 @@ type item interface {
 	hide() bool
 }
 
-type itemCache map[digest.Digest][]item
+type itemCache map[string][]item
 
 func newItemCache() itemCache {
-	return make(map[digest.Digest][]item)
+	return make(map[string][]item)
 }
 
-func (c itemCache) clear(k digest.Digest) {
-	c[k] = []item{}
+func (c itemCache) clear(key string) {
+	c[key] = []item{}
 }
 
-func (c itemCache) get(k digest.Digest, gen func() []item) []item {
-	if items, ok := c[k]; ok && len(items) > 0 {
+func (c itemCache) get(key string, gen func() []item) []item {
+	if items, ok := c[key]; ok && len(items) > 0 {
 		return items
 	}
 
 	newItems := gen()
-	c[k] = newItems
+	c[key] = newItems
 
 	return newItems
 }
 
 type timer struct {
-	start *time.Time
-	end   *time.Time
+	start *timestamp.Timestamp
+	end   *timestamp.Timestamp
 }
 
-func newTimer(start, end *time.Time) timer {
+func newTimer(start, end *timestamp.Timestamp) timer {
 	return timer{start: start, end: end}
 }
 
-func (t timer) Started() (bool, time.Time) {
+func (t timer) Started() (bool, timestamp.Timestamp) {
 	if t.start == nil {
-		return false, time.Time{}
+		return false, timestamp.Timestamp{}
 	}
 
 	start := t.start
@@ -64,9 +64,9 @@ func (t timer) Started() (bool, time.Time) {
 	return true, *start
 }
 
-func (t timer) Completed() (bool, time.Time) {
+func (t timer) Completed() (bool, timestamp.Timestamp) {
 	if t.end == nil {
-		return false, time.Time{}
+		return false, timestamp.Timestamp{}
 	}
 
 	end := t.end
@@ -82,10 +82,10 @@ func (t timer) Running() (bool, time.Duration) {
 
 	done, endTime := t.Completed()
 	if !done {
-		endTime = time.Now()
+		endTime = *timestamp.Now()
 	}
 
-	runTime := endTime.Sub(startTime)
+	runTime := endTime.AsTime().Sub(startTime.AsTime())
 	if runTime < 50*time.Millisecond {
 		return true, 0 * time.Second
 	}

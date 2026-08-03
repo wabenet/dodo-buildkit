@@ -6,14 +6,13 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 
-	"github.com/docker/docker/builder/remotecontext/urlutil"
 	log "github.com/hashicorp/go-hclog"
 	buildkit "github.com/moby/buildkit/session"
 	"github.com/moby/buildkit/session/filesync"
 	"github.com/moby/buildkit/session/secrets/secretsprovider"
 	"github.com/moby/buildkit/session/sshforward/sshprovider"
-	"github.com/pkg/errors"
 	"github.com/tonistiigi/fsutil"
 	fstypes "github.com/tonistiigi/fsutil/types"
 	"github.com/wabenet/dodo-core/pkg/plugin/builder"
@@ -88,10 +87,10 @@ func prepareContext(config builder.BuildConfig, session session) (*contextData, 
 		}
 
 		syncedDirs["context"] = fs
-	} else if urlutil.IsURL(config.Context) {
+	} else if strings.HasPrefix(config.Context, "https://") || strings.HasPrefix(config.Context, "http://") {
 		data.remote = config.Context
 	} else {
-		return nil, errors.Errorf("Context directory does not exist: %v", config.Context)
+		return nil, fmt.Errorf("Context directory does not exist: %s", config.Context)
 	}
 
 	if len(config.InlineDockerfile) > 0 {

@@ -11,13 +11,11 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/api/types/filters"
-	"github.com/docker/docker/api/types/image"
-	"github.com/docker/docker/pkg/jsonmessage"
-	"github.com/docker/docker/pkg/stringid"
 	controlapi "github.com/moby/buildkit/api/services/control"
 	"github.com/moby/buildkit/util/appcontext"
+	"github.com/moby/moby/api/types/build"
+	"github.com/moby/moby/api/types/jsonstream"
+	moby "github.com/moby/moby/client"
 	"github.com/wabenet/dodo-buildkit/internal/progress"
 	"golang.org/x/sync/errgroup"
 	"golang.org/x/time/rate"
@@ -30,15 +28,15 @@ func (img *Image) Get() (string, error) {
 
 	imgs, err := img.client.ImageList(
 		context.Background(),
-		image.ListOptions{
-			Filters: filters.NewArgs(filters.Arg("reference", img.config.ImageName)),
+		moby.ImageListOptions{
+			Filters: make(moby.Filters).Add("reference", img.config.ImageName),
 		},
 	)
-	if err != nil || len(imgs) == 0 {
+	if err != nil || len(imgs.Items) == 0 {
 		return img.Build()
 	}
 
-	return imgs[0].ID, nil
+	return imgs.Items[0].ID, nil
 }
 
 func (image *Image) Build() (string, error) {
@@ -154,7 +152,7 @@ func (image *Image) runBuild(contextData *contextData, displayCh chan *controlap
 	response, err := image.client.ImageBuild(
 		context.Background(),
 		nil,
-		types.ImageBuildOptions{
+		moby.ImageBuildOptions{
 			Tags:           tags,
 			SuppressOutput: false,
 			NoCache:        image.config.NoCache,
@@ -164,10 +162,9 @@ func (image *Image) runBuild(contextData *contextData, displayCh chan *controlap
 			Dockerfile:     contextData.dockerfileName,
 			BuildArgs:      args,
 			AuthConfigs:    image.authConfigs,
-			Version:        types.BuilderBuildKit,
+			Version:        build.BuilderBuildKit,
 			RemoteContext:  contextData.remote,
 			SessionID:      image.session.ID(),
-			BuildID:        stringid.GenerateRandomID(),
 		},
 	)
 	if err != nil {
@@ -180,7 +177,7 @@ func (image *Image) runBuild(contextData *contextData, displayCh chan *controlap
 	var imageID string
 
 	for {
-		var msg jsonmessage.JSONMessage
+		var msg jsonstream.Message
 		if err := decoder.Decode(&msg); err != nil {
 			if errors.Is(err, io.EOF) {
 				return imageID, nil
@@ -199,22 +196,22 @@ func (image *Image) runBuild(contextData *contextData, displayCh chan *controlap
 
 		switch msg.ID {
 		case "moby.image.id":
-			var result types.BuildResult
-			if err := json.Unmarshal(*msg.Aux, &result); err == nil {
+			var result build.Result
+
+			err := json.Unmarshal(*msg.Aux, &result)
+			if err == nil {
 				imageID = result.ID
 			}
+
 		case "moby.buildkit.trace":
 			if image.stream == nil {
 				continue
 			}
 
-			var dt []byte
-			if err := json.Unmarshal(*msg.Aux, &dt); err != nil {
-				continue
-			}
-
 			var resp controlapi.StatusResponse
-			if err := (&resp).Unmarshal(dt); err != nil {
+
+			err := json.Unmarshal(*msg.Aux, &resp)
+			if err != nil {
 				continue
 			}
 

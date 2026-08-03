@@ -5,13 +5,12 @@ import (
 
 	log "github.com/hashicorp/go-hclog"
 	api "github.com/moby/buildkit/api/services/control"
-	digest "github.com/opencontainers/go-digest"
 	"github.com/tonistiigi/vt100"
 )
 
 type vertexStates struct {
 	byTime   []*vertexState
-	byDigest map[digest.Digest]*vertexState
+	byDigest map[string]*vertexState
 }
 
 type vertexState struct {
@@ -26,14 +25,14 @@ type vertexState struct {
 }
 
 func newVertexStates() *vertexStates {
-	return &vertexStates{byDigest: make(map[digest.Digest]*vertexState)}
+	return &vertexStates{byDigest: make(map[string]*vertexState)}
 }
 
 func (s *vertexStates) List() []*vertexState {
 	return s.byTime
 }
 
-func (s *vertexStates) Get(k digest.Digest) (*vertexState, bool) {
+func (s *vertexStates) Get(k string) (*vertexState, bool) {
 	v, ok := s.byDigest[k]
 
 	return v, ok
