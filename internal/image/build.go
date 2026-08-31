@@ -11,6 +11,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/containerd/containerd/v2/pkg/protobuf/proto"
+	log "github.com/hashicorp/go-hclog"
 	controlapi "github.com/moby/buildkit/api/services/control"
 	"github.com/moby/buildkit/util/appcontext"
 	"github.com/moby/moby/api/types/build"
@@ -199,21 +201,38 @@ func (image *Image) runBuild(contextData *contextData, displayCh chan *controlap
 			var result build.Result
 
 			err := json.Unmarshal(*msg.Aux, &result)
-			if err == nil {
-				imageID = result.ID
+			if err != nil {
+				continue
 			}
+
+			log.L().Debug("received image id", "id", result.ID)
+
+			imageID = result.ID
 
 		case "moby.buildkit.trace":
 			if image.stream == nil {
 				continue
 			}
 
-			var resp controlapi.StatusResponse
+			var protoResponse []byte
 
-			err := json.Unmarshal(*msg.Aux, &resp)
+			err := json.Unmarshal(*msg.Aux, &protoResponse)
 			if err != nil {
+				log.L().Debug("unmarshal error", "aux", msg.Aux, "error", err)
+
 				continue
 			}
+
+			var resp controlapi.StatusResponse
+
+			err = proto.Unmarshal(protoResponse, &resp)
+			if err != nil {
+				log.L().Debug("unmarshal error", "aux", msg.Aux, "error", err)
+
+				continue
+			}
+
+			log.L().Debug("received build trace", "status", &resp)
 
 			displayCh <- &resp
 		}
